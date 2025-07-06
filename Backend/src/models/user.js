@@ -28,11 +28,11 @@ const userSchema = new Schema({
   },
   role:{
         type: String,
-        enum: ['user', 'admin'],
-        default: 'user',
+        enum: ['user', 'admin'],  
+        default: 'user',          
   },
   problemSolved:{
-        type:[String],
+        type:[String],//proble id store
   },
   password:{
       type:String,
