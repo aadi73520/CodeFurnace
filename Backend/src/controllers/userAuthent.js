@@ -1,18 +1,31 @@
 const User = require("../models/user")
 const validate = require("../utils/validator");
 const bcrypt = require("bcrypt");
+
 const jwt = require('jsonwebtoken');
+
 const redisClient = require('../config/redis');
-const register = async (req,res)=>{
+
+const register = async (req,res)=>{//jo bhi ies register path se aayega wo hamesa as a user hi register hoga
         try{
                 //validate the data;
                 validate(req.body);
                 const {firstName,emailId, password} = req.body;
                 req.body.password = await bcrypt.hash(password,10);
-                req.body.role = 'user';
-                const user = await User.create(req.body);
+
+                req.body.role = 'user';//always as a user is register hoga (admin nahi)
+
+                // for checking duplicate email id
+                // const existingUser = await User.findOne({ emailId });
+                // if (existingUser) {
+                //         return res.status(400).send("Email already registered");
+                // }
+
+                const user = await User.create(req.body);//ye emailId already exist toh nahi karti (yahi se answer mil jaayega)
+                
+                //jab user register kare tab hi token bhej do
                 const token = jwt.sign({_id:user._id,emailId:emailId,role:'user'},process.env.JWT_KEY,{expiresIn: '1h',});
-                res.cookie('token',token,{maxAge:60*60*1000});
+                res.cookie('token',token,{maxAge:60*60*1000});//after 1 hour cookies alredy expire ho jaayega
                 
                 res.status(201).send("User Registered Successfully");
 
@@ -46,31 +59,49 @@ const login = async (req,res)=>{
 
 const logout = async (req,res)=>{
         try{
+                //validate the token(pahle hi validate kar diya->userAuth.js (routes file));
+                
                 const {token} = req.cookies;
 
-                const payload = jwt.decode(token);
+                const payload = jwt.decode(token);//finding expiry time 
                 // console.log(payload);//{    _id: '67fe53263b2ab89885de330b',    emailId: 'mousamkumari@gmail.com',    iat: 1745203313,    exp: 1745205113  }
                 
-                await redisClient.set(`token:${token}`,"Blocked"); 
-                await redisClient.expireAt(`token:${token}`,payload.exp);
+                await redisClient.set(`token:${token}`,"Blocked");//save karane mn kuch time isiliye await
+                // await redisClient.expires(`token:${token}`,1800);//after 30 min blocked token automatically deleted//current time kitna time tak valid
+                        
+                await redisClient.expireAt(`token:${token}`,payload.exp);//ye 1970 1jan se calculate karta hn
                 
-                res.cookie("token",null,{expires:new Date(Date.now())});
+                res.cookie("token",null,{expires:new Date(Date.now())});//cookies ab deleted from frontend side //null → you're setting the value to null
                 res.send("Logged out successfully");
+                
+                //token add kar dunga Redis ke blockList (jab token ka time end tab Redis se automatically hat jaayega)
+                // Cookies ko clear kar dena....
         }
         catch(err)
         {
                 res.satus(503).send("Error : "+ err.message);
         }
 }
-  
+
 const adminRegister = async (req,res)=>{
-        try{ 
+        try{
+                // ->when we use userMiddleware
+                // if(req.result.role!='admin')
+                //         throw new Error("Invalid Credentials");
+
+                //validate the data;
                 validate(req.body);
                 const {firstName,emailId, password} = req.body;
                 req.body.password = await bcrypt.hash(password,10);
-                const user = await User.create(req.body);
+
+                // req.body.role = 'admin';//dono type ke like user,admin dono create kar sakta hn
+
+                const user = await User.create(req.body);//ye emailId already exist toh nahi karti (yahi se answer mil jaayega)
+                
+                //jab user register kare tab hi token bhej do           //"admin"
                 const token = jwt.sign({_id:user._id,emailId:emailId,role:user.role},process.env.JWT_KEY,{expiresIn: '1h',});
-                res.cookie('token',token,{maxAge:60*60*1000});
+                res.cookie('token',token,{maxAge:60*60*1000});//after 1 hour cookies alredy expire ho jaayega
+                
                 res.status(201).send("User Registered Successfully");
         }
         catch(error){

@@ -3,16 +3,20 @@ const app=express();
 require('dotenv').config();
 const main = require('./config/db');
 const cookieParser = require('cookie-parser');
+
 const authRouter = require('./routes/userAuth');
+
 const redisClient = require('./config/redis');
 
-app.use(express.json());
+app.use(express.json());//which ever comes through req.body is JSON format -> by using this line we can convert JSON to JS object
 app.use(cookieParser());
 
 app.use('/user',authRouter);
+ 
 
+// redis and mongodb both connected
 
-const InitlizeConnection = async ()=>{
+const InitlizeConnection = async ()=>{ 
         try{
                 await Promise.all([redisClient.connect(),main()]);
                 console.log("Connected to Redis");
@@ -25,7 +29,7 @@ const InitlizeConnection = async ()=>{
                 console.log("Error: "+err);
         }
 }
-InitlizeConnection(); 
+InitlizeConnection();
 
 
 // main()

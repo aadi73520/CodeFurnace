@@ -13,10 +13,10 @@ authRouter.post('/login',login);
 //logout
 authRouter.post('/logout',userMiddleware,logout);
 
-authRouter.post('/admin/register',adminMiddleware,adminRegister);
+authRouter.post('/admin/register',adminMiddleware,adminRegister);//admin hi as a admin kisi ko admin bana sakta hn
+// authRouter.post('/admin/register',userMiddleware,adminRegister);//userMiddleware alreay result mn role store hn
 
-
-//getprofile 
-// authRouter.get('/getProfile',getProfile); 
+//getprofile
+authRouter.get('/getProfile',getProfile);
 
 module.exports = authRouter;

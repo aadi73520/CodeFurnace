@@ -9,7 +9,7 @@ const problemSchema = new Schema({
         description:{
                 type:String,
                 required:true
-        },
+        },  
         difficulty:{
                 type:String,
                 enum:['easy','medium','hard'],
@@ -60,12 +60,24 @@ const problemSchema = new Schema({
                         }
                 }
         ],
+        referenceSolution:[
+                {
+                        language:{
+                                type:String,
+                                required:true,
+                        },
+                        completeCode:{
+                                type:String,
+                                required:true
+                        }
+                }
+        ],
         problemCreator:{
-                type:Schema.Types.ObjectId,
-                ref:'user',
+                type:Schema.Types.ObjectId,//kon user ies problem ko create kara hn
+                ref:'user',//ek schema durhre ko refer kara hn
                 required:true
         }
 },{timestamps:true});
 
-const Problem = mongoose.model("problem",problemSchema);
+const problem = mongoose.model("problem",problemSchema);
 module.exports = Problem;
